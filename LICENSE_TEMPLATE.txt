@@ -1,0 +1,1 @@
+Choose and add the software license that matches the authors' and institution's release policy before publishing the repository. MIT, BSD-3-Clause, and Apache-2.0 are common choices for research software.

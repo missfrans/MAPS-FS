@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "maps-fs"
+version = "1.3.2"
+description = "Model-Aware Prioritized Search for Feature Selection"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+  "numpy>=1.26", "pandas>=2.2", "scikit-learn>=1.6", "scipy>=1.11",
+  "statsmodels>=0.14", "patsy>=0.5", "matplotlib>=3.8", "joblib>=1.3",
+  "PyYAML>=6.0", "tensorflow==2.21.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mapsfs*"]
+
+[project.scripts]
+mapsfs-run = "mapsfs.cli:main"

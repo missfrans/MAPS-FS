@@ -1,0 +1,17 @@
+MAPS-FS — Model-Aware Prioritized Search for Feature Selection
+Release: v1.3.2
+Public reproduction mode: single machine
+Canonical command:
+  bash scripts/reproduce_manuscript_single_machine.sh
+
+Scientific design:
+  datasets: UNSW-NB15, HIKARI2021
+  feature selectors: RFE, LASSO, RF, mRMR, Autoencoder
+  downstream models: CNN, RNN, DNN, MLP, LSTM
+  seeds: 42, 43, 44, 45, 46
+
+The exhaustive Oracle is validation-only and must not alter Gate or d0.
+No worker/coordinator/merge step is required by this public release.
+
+Before execution, follow README.md and REPRODUCE_SINGLE_MACHINE.md
+for environment and dataset placement.

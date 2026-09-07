@@ -1,0 +1,122 @@
+# MAPS-FS final reference experiment configuration (audited Gate protocol).
+# Commit this file together with the experiment provenance and result hashes.
+project_root: ..
+plugins: []
+
+paths:
+  output_dir: outputs
+
+experiment:
+  seeds: [42, 43, 44, 45, 46]
+
+datasets:
+  UNSW_NB15:
+    paths:
+      - data/UNSW_NB15_1.csv
+      - data/UNSW_NB15_2.csv
+      - data/UNSW_NB15_3.csv
+      - data/UNSW_NB15_4.csv
+    label_col: Label
+    drop_cols: [attack_cat, Label]
+    identifier_cols: [id, srcip, dstip, sport, dsport]
+    positive_values: [1, "1", attack, Attack, malicious, Malicious, anomaly, Anomaly]
+    # Keep k strictly below the actual full dimensionality; 'full' is a separate reference.
+    top_k_values: [5, 10, 15, 20, 25, 30, 35, 40]
+
+  HIKARI2021:
+    path: data/HIKARI2021.csv
+    label_col: Label
+    drop_cols: [traffic_category, Label]
+    identifier_cols: [uid, originh, responh, "Unnamed", "Unnamed: 0", originp, responp, no]
+    # If Label is already numeric 0/1 this list is not used. Verify string labels before changing it.
+    positive_values: [1, "1", attack, Attack, malicious, Malicious, anomaly, Anomaly, Bruteforce]
+    top_k_values: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 70]
+
+splits:
+  test_size: 0.30
+  validation_size_within_train: 0.20
+  stratify: true
+
+preprocessing:
+  drop_identifier_columns: true
+  # Disabled by default so repeated seeds retain the same feature schema.
+  drop_constant_columns_train_only: false
+  numeric_conversion_ratio: 0.95
+  numeric_imputer: median
+  # Set true for publication archives if full raw-file SHA256 hashing is acceptable.
+  hash_data_files: false
+  invalid_k_policy: error
+  require_same_schema_across_seeds: true
+
+feature_selection:
+  # Researchers may replace/add methods through plugins.
+  enabled: [rfe, lasso, rf, mrmr, autoencoder]
+  sample_size: null
+  params:
+    rfe: {max_iter: 3000, solver: liblinear, step: 1}
+    lasso: {max_iter: 5000, solver: saga, C: 1.0, n_jobs: -1}
+    rf: {n_estimators: 300, n_jobs: -1}
+    mrmr: {redundancy_weight: 1.0}
+    autoencoder: {epochs: 30, batch_size: 256, patience: 5, validation_split: 0.10, learning_rate: 0.001}
+
+models:
+  # GNN is not included by default; add any architecture via the plugin registry.
+  enabled: [cnn, rnn, dnn, mlp, lstm]
+  params:
+    cnn: {filters: [32, 64], kernel_size: 3, dense_units: 128, dropout: 0.5}
+    rnn: {units: 64, dense_units: 128, dropout: 0.5}
+    dnn: {hidden_units: [128, 64], dropout: 0.5}
+    mlp: {hidden_units: [128, 64, 32], dropouts: [0.5, 0.5, 0.3]}
+    lstm: {units: 64, dense_units: 128, dropout: 0.5}
+
+training:
+  epochs: 30
+  batch_size: 256
+  early_stopping_patience: 5
+  learning_rate: 0.001
+  train_sample_size: null
+  # Manuscript-compatible default. validation_f1 and validation_youden are supported,
+  # but changing threshold policy requires rerunning every compared configuration.
+  threshold_policy: fixed
+  fixed_threshold: 0.5
+  max_threshold_candidates: 2001
+  save_predictions: false
+  save_models: false
+  verbose: 0
+
+runtime:
+  gpu_memory_growth: true
+  mixed_precision: false
+
+screening:
+  design: d_optimal_blocks
+  # auto_min_rank chooses the smallest blockwise D-optimal design that reaches
+  # the rank of the predefined fixed-effect design matrix. An integer budget is also accepted.
+  representation_blocks: auto_min_rank
+  pilot_seeds: [42, 43, 44, 45, 46]
+
+statistics:
+  # Primary Gate response. Gate interaction inference uses nested OLS models
+  # with seed as a fixed blocking effect and a partial F-test.
+  screening_response: f1
+  alpha: 0.05
+  # Paired seed-level contrasts to the within-model screened best; Holm-adjusted.
+  contrast_test: paired_t
+
+refinement:
+  seeds: [42, 43, 44, 45, 46]
+
+efficiency_selection:
+  objectives:
+    f1: max
+    far: min
+    inference_time_per_flow_us: min
+    n_features: min
+
+oracle:
+  seeds: [42, 43, 44, 45, 46]
+
+runtime_profile:
+  seeds: [42, 43, 44, 45, 46]
+  warmup_runs: 5
+  repeats: 30
